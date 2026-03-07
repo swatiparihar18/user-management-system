@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>User Management System</title>
+  <link rel="stylesheet" href="style.css" />
+  <!-- Google Fonts: Syne (display) + DM Mono (code/data) -->
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+</head>
+<body>
+
+  <!-- ── Background grid decoration ── -->
+  <div class="bg-grid" aria-hidden="true"></div>
+
+  <div class="app-wrapper">
+
+    <!-- ══ HEADER ══ -->
+    <header class="header">
+      <div class="header-inner">
+        <div class="logo">
+          <span class="logo-icon">⬡</span>
+          <span class="logo-text">UserBase</span>
+        </div>
+        <p class="header-sub">Management Console <span class="tag">v1.0</span></p>
+      </div>
+    </header>
+
+    <!-- ══ NOTIFICATION TOAST ══ -->
+    <div id="toast" class="toast" role="alert" aria-live="polite"></div>
+
+    <!-- ══ MAIN GRID ══ -->
+    <main class="main-grid">
+
+      <!-- ── LEFT: Form Panel ── -->
+      <aside class="form-panel">
+        <div class="panel-header">
+          <h2 id="form-title">Add New User</h2>
+          <div class="panel-indicator"></div>
+        </div>
+
+        <form id="user-form" novalidate>
+          <!-- Hidden field to store the ID when editing -->
+          <input type="hidden" id="user-id" />
+
+          <div class="field-group">
+            <label for="name">Full Name</label>
+            <input type="text" id="name" placeholder="e.g. Jane Doe" autocomplete="off" required />
+            <span class="field-line"></span>
+          </div>
+
+          <div class="field-group">
+            <label for="email">Email Address</label>
+            <input type="email" id="email" placeholder="e.g. jane@example.com" autocomplete="off" required />
+            <span class="field-line"></span>
+          </div>
+
+          <div class="field-group">
+            <label for="age">Age</label>
+            <input type="number" id="age" placeholder="e.g. 25" min="1" max="120" required />
+            <span class="field-line"></span>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" id="submit-btn" class="btn btn-primary">
+              <span class="btn-icon">+</span>
+              <span id="btn-label">Create User</span>
+            </button>
+            <button type="button" id="cancel-btn" class="btn btn-ghost" style="display:none;">
+              Cancel
+            </button>
+          </div>
+        </form>
+
+        <!-- Stats strip -->
+        <div class="stats-strip">
+          <div class="stat">
+            <span class="stat-num" id="total-count">—</span>
+            <span class="stat-label">Total Users</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat">
+            <span class="stat-num" id="avg-age">—</span>
+            <span class="stat-label">Avg. Age</span>
+          </div>
+        </div>
+      </aside>
+
+      <!-- ── RIGHT: Table Panel ── -->
+      <section class="table-panel">
+        <div class="panel-header">
+          <h2>User Directory</h2>
+          <button class="btn btn-icon-only" id="refresh-btn" title="Refresh">↻</button>
+        </div>
+
+        <!-- Search bar -->
+        <div class="search-wrap">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="search-input" placeholder="Search by name or email…" />
+        </div>
+
+        <!-- Table -->
+        <div class="table-scroll">
+          <table id="users-table">
+            <thead>
+              <tr>
+                <th>#ID</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Age</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="users-tbody">
+              <!-- Rows injected by JS -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Empty state -->
+        <div id="empty-state" class="empty-state" style="display:none;">
+          <div class="empty-icon">◎</div>
+          <p>No users found.</p>
+          <small>Add your first user using the form.</small>
+        </div>
+
+        <!-- Loading skeleton -->
+        <div id="loading-state" class="loading-state">
+          <div class="skeleton-row"></div>
+          <div class="skeleton-row"></div>
+          <div class="skeleton-row"></div>
+        </div>
+
+      </section>
+    </main>
+
+  </div><!-- /app-wrapper -->
+
+  <!-- ══ DELETE CONFIRMATION MODAL ══ -->
+  <div id="modal-overlay" class="modal-overlay" style="display:none;" role="dialog" aria-modal="true">
+    <div class="modal">
+      <div class="modal-icon">⚠</div>
+      <h3>Delete User?</h3>
+      <p id="modal-msg">This action cannot be undone.</p>
+      <div class="modal-actions">
+        <button id="modal-confirm" class="btn btn-danger">Yes, Delete</button>
+        <button id="modal-cancel"  class="btn btn-ghost">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
