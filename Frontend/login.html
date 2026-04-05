@@ -1,60 +1,20 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <title>Login</title>
-</head>
 <body>
 
 <h2>Signup</h2>
-<input id="signupName" placeholder="Name">
-<input id="signupEmail" placeholder="Email">
-<input id="signupAge" placeholder="Age">
-<input id="signupPassword" placeholder="Password">
+<input id="sname" placeholder="Name">
+<input id="semail" placeholder="Email">
+<input id="sage" placeholder="Age">
+<input id="spass" placeholder="Password">
 <button onclick="signup()">Signup</button>
 
 <h2>Login</h2>
-<input id="loginEmail" placeholder="Email">
-<input id="loginPassword" placeholder="Password">
+<input id="lemail" placeholder="Email">
+<input id="lpass" placeholder="Password">
 <button onclick="login()">Login</button>
 
-<script>
-async function signup() {
-  const res = await fetch("http://localhost:5000/auth/signup", {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({
-      name: signupName.value,
-      email: signupEmail.value,
-      age: signupAge.value,
-      password: signupPassword.value
-    })
-  });
-
-  alert("Signup done");
-}
-
-async function login() {
-  const res = await fetch("http://localhost:5000/auth/login", {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({
-      email: loginEmail.value,
-      password: loginPassword.value
-    })
-  });
-
-  const data = await res.json();
-
-  if (data.token) {
-    localStorage.setItem("token", data.token);
-
-    // 🔥 IMPORTANT
-    window.location.href = "dashboard.html";
-  } else {
-    alert("Login failed");
-  }
-}
-</script>
+<script src="script.js"></script>
 
 </body>
 </html>
