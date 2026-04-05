@@ -10,6 +10,13 @@
 </head>
 <body>
 
+  <!-- Auth guard - SABSE PEHLE load hoga -->
+  <script>
+    if (!localStorage.getItem("token")) {
+      window.location.href = "login.html";
+    }
+  </script>
+
   <!-- ── Background grid decoration ── -->
   <div class="bg-grid" aria-hidden="true"></div>
 

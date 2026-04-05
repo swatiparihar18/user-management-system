@@ -17,8 +17,8 @@ const authMiddleware = (req, res, next) => {
   }
 };
 
-// GET all users
-router.get("/:id", authMiddleware, async (req, res) => {
+// GET all users — FIX: was "/:id", should be "/"
+router.get("/", authMiddleware, async (req, res) => {
   try {
     const users = await pool.query("SELECT id, name, email, age FROM users");
     res.json(users.rows);
@@ -27,12 +27,11 @@ router.get("/:id", authMiddleware, async (req, res) => {
   }
 });
 
-// CREATE user
-router.post("/:id", authMiddleware, async (req, res) => {
+// CREATE user — FIX: was "/:id", should be "/"
+router.post("/", authMiddleware, async (req, res) => {
   try {
     const { name, email, age } = req.body;
 
-    // LEVEL 2: Data Validation
     if (!name || !email || !age) {
       return res.status(400).json("All fields (name, email, age) are required");
     }
@@ -53,7 +52,6 @@ router.put("/:id", authMiddleware, async (req, res) => {
     const { id } = req.params;
     const { name, email, age } = req.body;
 
-    // LEVEL 2: Data Validation
     if (!name || !email || !age) {
       return res.status(400).json("Fields cannot be empty");
     }
