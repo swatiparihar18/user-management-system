@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:5000";
+const API_URL = "https://user-management-system-yf0m.onrender.com";
 
 /* ================= TOKEN ================= */
 function getToken() {
