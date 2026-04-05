@@ -1,11 +1,27 @@
 const express = require("express");
 const router = express.Router();
 const pool = require("../db");
+const jwt = require("jsonwebtoken");
+
+// Middleware (token check)
+const authMiddleware = (req, res, next) => {
+  try {
+    const token = req.header("Authorization");
+    if (!token) return res.status(401).json("Access denied");
+
+    jwt.verify(token, process.env.JWT_SECRET);
+    next();
+  } catch {
+    res.status(400).json("Invalid token");
+  }
+};
 
 // GET all users
-router.get("/", async (req, res) => {
+router.get("/", authMiddleware, async (req, res) => {
   try {
-    const users = await pool.query("SELECT * FROM users");
+    const users = await pool.query(
+      "SELECT id, name, email, age FROM users"
+    );
     res.json(users.rows);
   } catch (err) {
     res.status(500).json(err.message);
@@ -13,7 +29,7 @@ router.get("/", async (req, res) => {
 });
 
 // CREATE user
-router.post("/", async (req, res) => {
+router.post("/", authMiddleware, async (req, res) => {
   try {
     const { name, email, age } = req.body;
 
@@ -29,25 +45,24 @@ router.post("/", async (req, res) => {
 });
 
 // UPDATE user
-router.put("/:id", async (req, res) => {
+router.put("/:id", authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
     const { name, email, age } = req.body;
 
-    const updateUser = await pool.query(
+    const updatedUser = await pool.query(
       "UPDATE users SET name=$1, email=$2, age=$3 WHERE id=$4 RETURNING *",
       [name, email, age, id]
     );
 
-    res.json(updateUser.rows[0]);
+    res.json(updatedUser.rows[0]);
   } catch (err) {
     res.status(500).json(err.message);
   }
 });
 
-
 // DELETE user
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
 

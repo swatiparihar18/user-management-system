@@ -1,384 +1,226 @@
-/* ═══════════════════════════════════════════════════
-   USER MANAGEMENT SYSTEM — script.js
-   Connects to the Express REST API at http://localhost:5000
-   Functions: fetchUsers, createUser, updateUser, deleteUser
-═══════════════════════════════════════════════════ */
-
-// ── API base URL — change if your server runs elsewhere ──
+if (!localStorage.getItem("token")) {
+  alert("Please login first");
+}
 const API_URL = "http://localhost:5000/users";
 
-// ── Module-level state ──
-let allUsers   = [];       // full list from API (for search filtering)
-let deleteId   = null;     // ID pending deletion confirmation
+let allUsers = [];
+let deleteId = null;
 
-/* ══════════════════════════════════════════════════
-   DOM REFERENCES
-══════════════════════════════════════════════════ */
-const form        = document.getElementById("user-form");
-const userIdInput = document.getElementById("user-id");
-const nameInput   = document.getElementById("name");
-const emailInput  = document.getElementById("email");
-const ageInput    = document.getElementById("age");
-const formTitle   = document.getElementById("form-title");
-const btnLabel    = document.getElementById("btn-label");
-const submitBtn   = document.getElementById("submit-btn");
-const cancelBtn   = document.getElementById("cancel-btn");
-const formPanel   = document.querySelector(".form-panel");
-
-const tbody       = document.getElementById("users-tbody");
-const emptyState  = document.getElementById("empty-state");
-const loadState   = document.getElementById("loading-state");
-const searchInput = document.getElementById("search-input");
-const refreshBtn  = document.getElementById("refresh-btn");
-
-const totalCount  = document.getElementById("total-count");
-const avgAge      = document.getElementById("avg-age");
-
-const modalOverlay  = document.getElementById("modal-overlay");
-const modalMsg      = document.getElementById("modal-msg");
-const modalConfirm  = document.getElementById("modal-confirm");
-const modalCancel   = document.getElementById("modal-cancel");
-
-/* ══════════════════════════════════════════════════
-   TOAST NOTIFICATION
-   Shows a temporary success or error message.
-══════════════════════════════════════════════════ */
+/* ================= TOAST ================= */
 function showToast(message, type = "success") {
   const toast = document.getElementById("toast");
-  const icon  = type === "success" ? "✔" : "✖";
-  toast.textContent = `${icon}  ${message}`;
-  toast.className   = `toast ${type} show`;
+  const icon = type === "success" ? "✔" : "✖";
+  toast.textContent = `${icon} ${message}`;
+  toast.className = `toast ${type} show`;
 
-  // Auto-hide after 3 seconds
-  setTimeout(() => { toast.classList.remove("show"); }, 3000);
+  setTimeout(() => toast.classList.remove("show"), 3000);
 }
 
-/* ══════════════════════════════════════════════════
-   FETCH ALL USERS  →  GET /users
-   Retrieves all users from the API and renders them.
-══════════════════════════════════════════════════ */
+/* ================= TOKEN HELPER ================= */
+function getToken() {
+  return localStorage.getItem("token");
+}
+
+/* ================= FETCH USERS ================= */
 async function fetchUsers() {
   showLoading(true);
   try {
-    const response = await fetch(API_URL);
+    const res = await fetch(API_URL, {
+      headers: {
+        "Authorization": getToken()
+      }
+    });
 
-    // Check if the server responded with an error status
-    if (!response.ok) throw new Error(`Server error: ${response.status}`);
+    if (!res.ok) throw new Error("Unauthorized");
 
-    const users = await response.json();
-    allUsers = users;
+    const data = await res.json();
+    allUsers = data;
 
-    renderTable(users);
-    updateStats(users);
+    renderTable(data);
+    updateStats(data);
   } catch (err) {
-    console.error("fetchUsers:", err);
-    showToast("Could not load users. Is the server running?", "error");
-    showLoading(false);
+    showToast("Login first!", "error");
     showEmpty(true);
   }
 }
 
-/* ══════════════════════════════════════════════════
-   CREATE USER  →  POST /users
-   Reads the form inputs and sends a POST request.
-══════════════════════════════════════════════════ */
+/* ================= CREATE ================= */
 async function createUser(name, email, age) {
   try {
-    const response = await fetch(API_URL, {
-      method:  "POST",
-      headers: { "Content-Type": "application/json" },
-      body:    JSON.stringify({ name, email, age: Number(age) }),
+    const res = await fetch(API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": getToken()
+      },
+      body: JSON.stringify({ name, email, age: Number(age) })
     });
 
-    if (!response.ok) {
-      const errData = await response.json().catch(() => ({}));
-      throw new Error(errData.error || `Status ${response.status}`);
-    }
+    if (!res.ok) throw new Error("Error");
 
-    const newUser = await response.json();
-    showToast(`User "${newUser.name}" created successfully!`);
-    return newUser;
+    const data = await res.json();
+    showToast("User created!");
+    return data;
   } catch (err) {
-    console.error("createUser:", err);
-    showToast(`Failed to create user: ${err.message}`, "error");
+    showToast("Create failed", "error");
     return null;
   }
 }
 
-/* ══════════════════════════════════════════════════
-   UPDATE USER  →  PUT /users/:id
-   Sends updated fields for an existing user.
-══════════════════════════════════════════════════ */
+/* ================= UPDATE ================= */
 async function updateUser(id, name, email, age) {
   try {
-    const response = await fetch(`${API_URL}/${id}`, {
-      method:  "PUT",
-      headers: { "Content-Type": "application/json" },
-      body:    JSON.stringify({ name, email, age: Number(age) }),
+    const res = await fetch(`${API_URL}/${id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": getToken()
+      },
+      body: JSON.stringify({ name, email, age: Number(age) })
     });
 
-    if (!response.ok) {
-      const errData = await response.json().catch(() => ({}));
-      throw new Error(errData.error || `Status ${response.status}`);
-    }
+    if (!res.ok) throw new Error("Error");
 
-    const updated = await response.json();
-    showToast(`User "${updated.name}" updated successfully!`);
-    return updated;
+    const data = await res.json();
+    showToast("Updated!");
+    return data;
   } catch (err) {
-    console.error("updateUser:", err);
-    showToast(`Failed to update user: ${err.message}`, "error");
+    showToast("Update failed", "error");
     return null;
   }
 }
 
-/* ══════════════════════════════════════════════════
-   DELETE USER  →  DELETE /users/:id
-   Deletes a user by their ID.
-══════════════════════════════════════════════════ */
+/* ================= DELETE ================= */
 async function deleteUser(id) {
   try {
-    const response = await fetch(`${API_URL}/${id}`, { method: "DELETE" });
+    const res = await fetch(`${API_URL}/${id}`, {
+      method: "DELETE",
+      headers: {
+        "Authorization": getToken()
+      }
+    });
 
-    if (!response.ok) throw new Error(`Status ${response.status}`);
+    if (!res.ok) throw new Error("Error");
 
-    showToast("User deleted successfully.");
+    showToast("Deleted!");
     return true;
-  } catch (err) {
-    console.error("deleteUser:", err);
-    showToast("Failed to delete user.", "error");
+  } catch {
+    showToast("Delete failed", "error");
     return false;
   }
 }
 
-/* ══════════════════════════════════════════════════
-   FORM SUBMIT HANDLER
-   Decides whether to create or update based on
-   whether a user ID is stored in the hidden input.
-══════════════════════════════════════════════════ */
-form.addEventListener("submit", async (e) => {
+/* ================= SIGNUP ================= */
+async function signup() {
+  const name = document.getElementById("name").value;
+  const email = document.getElementById("email").value;
+  const age = document.getElementById("age").value;
+  const password = document.getElementById("password").value;
+
+  const res = await fetch("http://localhost:5000/auth/signup", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({ name, email, age, password })
+  });
+
+  if (res.ok) {
+    showToast("Signup successful!");
+  } else {
+    showToast("Signup failed", "error");
+  }
+}
+
+/* ================= LOGIN ================= */
+async function login() {
+  const email = document.getElementById("loginEmail").value;
+  const password = document.getElementById("loginPassword").value;
+
+  const res = await fetch("http://localhost:5000/auth/login", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({ email, password })
+  });
+
+  const data = await res.json();
+
+  if (data.token) {
+    localStorage.setItem("token", data.token);
+    showToast("Login successful!");
+    fetchUsers();
+  } else {
+    showToast("Login failed", "error");
+  }
+}
+
+/* ================= FORM ================= */
+document.getElementById("user-form").addEventListener("submit", async (e) => {
   e.preventDefault();
 
-  const id    = userIdInput.value.trim();
-  const name  = nameInput.value.trim();
-  const email = emailInput.value.trim();
-  const age   = ageInput.value.trim();
+  const id = document.getElementById("user-id").value;
+  const name = document.getElementById("name").value;
+  const email = document.getElementById("email").value;
+  const age = document.getElementById("age").value;
 
-  // Basic client-side validation
-  if (!name || !email || !age) {
-    showToast("Please fill in all fields.", "error");
-    return;
-  }
-
-  // Disable button to prevent double-submit
-  submitBtn.disabled = true;
-
-  let success = false;
+  let success;
 
   if (id) {
-    // ── UPDATE existing user ──
-    const result = await updateUser(id, name, email, age);
-    success = !!result;
+    success = await updateUser(id, name, email, age);
   } else {
-    // ── CREATE new user ──
-    const result = await createUser(name, email, age);
-    success = !!result;
+    success = await createUser(name, email, age);
   }
-
-  submitBtn.disabled = false;
 
   if (success) {
-    resetForm();
-    fetchUsers(); // Refresh the table
+    e.target.reset();
+    fetchUsers();
   }
 });
 
-/* ══════════════════════════════════════════════════
-   EDIT BUTTON (table row)
-   Populates the form with the user's current data.
-══════════════════════════════════════════════════ */
-function handleEdit(user) {
-  // Populate form fields
-  userIdInput.value = user.id;
-  nameInput.value   = user.name;
-  emailInput.value  = user.email;
-  ageInput.value    = user.age;
-
-  // Switch form to "Edit" mode
-  formTitle.textContent = "Edit User";
-  btnLabel.textContent  = "Update User";
-  submitBtn.querySelector(".btn-icon").textContent = "✎";
-  cancelBtn.style.display = "inline-flex";
-
-  // Visual indicator that we're in edit mode
-  formPanel.classList.add("editing");
-
-  // Scroll the form into view (useful on mobile)
-  formPanel.scrollIntoView({ behavior: "smooth", block: "start" });
-  nameInput.focus();
-}
-
-/* ══════════════════════════════════════════════════
-   DELETE BUTTON (table row)
-   Opens the confirmation modal before deleting.
-══════════════════════════════════════════════════ */
-function handleDeleteClick(id, name) {
-  deleteId = id;
-  modalMsg.textContent = `"${name}" will be permanently removed.`;
-  modalOverlay.style.display = "flex";
-}
-
-// Modal: Confirm delete
-modalConfirm.addEventListener("click", async () => {
-  if (!deleteId) return;
-  modalOverlay.style.display = "none";
-
-  const success = await deleteUser(deleteId);
-  deleteId = null;
-
-  if (success) fetchUsers(); // Refresh table
-});
-
-// Modal: Cancel
-modalCancel.addEventListener("click", () => {
-  modalOverlay.style.display = "none";
-  deleteId = null;
-});
-
-// Close modal when clicking outside the box
-modalOverlay.addEventListener("click", (e) => {
-  if (e.target === modalOverlay) {
-    modalOverlay.style.display = "none";
-    deleteId = null;
-  }
-});
-
-/* ══════════════════════════════════════════════════
-   CANCEL EDIT
-   Resets the form back to "Add" mode.
-══════════════════════════════════════════════════ */
-cancelBtn.addEventListener("click", resetForm);
-
-function resetForm() {
-  form.reset();
-  userIdInput.value       = "";
-  formTitle.textContent   = "Add New User";
-  btnLabel.textContent    = "Create User";
-  submitBtn.querySelector(".btn-icon").textContent = "+";
-  cancelBtn.style.display = "none";
-  formPanel.classList.remove("editing");
-}
-
-/* ══════════════════════════════════════════════════
-   REFRESH BUTTON
-══════════════════════════════════════════════════ */
-refreshBtn.addEventListener("click", () => {
-  refreshBtn.classList.add("spinning");
-  fetchUsers().finally(() => {
-    setTimeout(() => refreshBtn.classList.remove("spinning"), 600);
-  });
-});
-
-/* ══════════════════════════════════════════════════
-   SEARCH / FILTER
-   Filters the local `allUsers` array by name or email
-   without making extra API calls.
-══════════════════════════════════════════════════ */
-searchInput.addEventListener("input", () => {
-  const query = searchInput.value.toLowerCase().trim();
-  if (!query) {
-    renderTable(allUsers);
-    return;
-  }
-  const filtered = allUsers.filter(
-    (u) =>
-      u.name.toLowerCase().includes(query) ||
-      u.email.toLowerCase().includes(query)
-  );
-  renderTable(filtered);
-});
-
-/* ══════════════════════════════════════════════════
-   RENDER TABLE
-   Builds the <tbody> rows from a users array.
-══════════════════════════════════════════════════ */
+/* ================= UI ================= */
 function renderTable(users) {
-  showLoading(false);
+  const tbody = document.getElementById("users-tbody");
 
-  if (!users || users.length === 0) {
+  if (!users.length) {
     tbody.innerHTML = "";
-    showEmpty(true);
     return;
   }
 
-  showEmpty(false);
-
-  // Build all rows as an HTML string (fast DOM update)
-  tbody.innerHTML = users
-    .map(
-      (user) => `
-        <tr id="row-${user.id}">
-          <td>#${user.id}</td>
-          <td>${escapeHtml(user.name)}</td>
-          <td>${escapeHtml(user.email)}</td>
-          <td>${user.age}</td>
-          <td>
-            <div class="action-btns">
-              <button
-                class="btn btn-edit"
-                onclick="handleEdit(${JSON.stringify(user).replace(/"/g, '&quot;')})"
-                title="Edit user"
-              >Edit</button>
-              <button
-                class="btn btn-delete"
-                onclick="handleDeleteClick(${user.id}, '${escapeHtml(user.name)}')"
-                title="Delete user"
-              >Delete</button>
-            </div>
-          </td>
-        </tr>`
-    )
-    .join("");
+  tbody.innerHTML = users.map(u => `
+    <tr>
+      <td>${u.id}</td>
+      <td>${u.name}</td>
+      <td>${u.email}</td>
+      <td>${u.age}</td>
+      <td>
+        <button onclick="editUser(${u.id}, '${u.name}', '${u.email}', ${u.age})">Edit</button>
+        <button onclick="removeUser(${u.id})">Delete</button>
+      </td>
+    </tr>
+  `).join("");
 }
 
-/* ══════════════════════════════════════════════════
-   UPDATE STATS (total count + average age)
-══════════════════════════════════════════════════ */
+function editUser(id, name, email, age) {
+  document.getElementById("user-id").value = id;
+  document.getElementById("name").value = name;
+  document.getElementById("email").value = email;
+  document.getElementById("age").value = age;
+}
+
+async function removeUser(id) {
+  const ok = await deleteUser(id);
+  if (ok) fetchUsers();
+}
+
+function showLoading(show) {
+  document.getElementById("loading-state").style.display = show ? "block" : "none";
+}
+
+function showEmpty(show) {
+  document.getElementById("empty-state").style.display = show ? "block" : "none";
+}
+
 function updateStats(users) {
-  totalCount.textContent = users.length;
-
-  if (users.length === 0) {
-    avgAge.textContent = "—";
-    return;
-  }
-
-  const avg = users.reduce((sum, u) => sum + Number(u.age), 0) / users.length;
-  avgAge.textContent = avg.toFixed(1);
+  document.getElementById("total-count").textContent = users.length;
 }
 
-/* ══════════════════════════════════════════════════
-   UI HELPERS
-══════════════════════════════════════════════════ */
-function showLoading(visible) {
-  loadState.style.display = visible ? "block" : "none";
-  if (visible) tbody.innerHTML = "";
-}
-
-function showEmpty(visible) {
-  emptyState.style.display = visible ? "block" : "none";
-}
-
-// Prevents XSS from user-supplied data being injected into the DOM
-function escapeHtml(str) {
-  return String(str)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
-
-/* ══════════════════════════════════════════════════
-   INIT — load users when page first loads
-══════════════════════════════════════════════════ */
+/* ================= INIT ================= */
 fetchUsers();
