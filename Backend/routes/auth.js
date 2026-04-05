@@ -1,3 +1,4 @@
+console.log("DB URL:", process.env.DATABASE_URL ? "Loaded ✅" : "Missing ❌");
 const express = require("express");
 const router = express.Router();
 
