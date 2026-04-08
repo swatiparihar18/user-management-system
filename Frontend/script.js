@@ -27,12 +27,15 @@ async function signup() {
         password: document.getElementById("spass").value
       })
     });
+
+    const data = await res.json();
+
     if (res.ok) {
       showToast("Signup successful! Please log in.");
     } else {
-      const err = await res.json();
-      showToast(err.message || "Signup failed", "error");
+      showToast(data.message || "Signup failed", "error");
     }
+
   } catch (e) {
     showToast("Network error during signup", "error");
   }
