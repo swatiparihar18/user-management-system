@@ -8,13 +8,13 @@ exports.signup = async (req, res) => {
 
     // FIX: validate before bcrypt — undefined password causes 500 crash
     if (!name || !email || !age || !password) {
-      return res.status(400).json("All fields are required");
+      return res.status(400).json({ message: "All fields are required" });
     }
 
     // Check if email already exists
     const existing = await pool.query("SELECT id FROM users WHERE email=$1", [email]);
     if (existing.rows.length > 0) {
-      return res.status(400).json("Email already registered");
+      return res.status(400).json({ message: "Email already registered" }); 
     }
 
     const hash = await bcrypt.hash(password, 10);
@@ -26,7 +26,7 @@ exports.signup = async (req, res) => {
 
     res.json(user.rows[0]);
   } catch (err) {
-    res.status(500).json(err.message);
+    res.status(500).json({ message: err.message });
   }
 };
 
@@ -42,13 +42,13 @@ exports.login = async (req, res) => {
     const user = await pool.query("SELECT * FROM users WHERE email=$1", [email]);
 
     if (user.rows.length === 0) {
-      return res.status(400).json("User not found");
+     return res.status(400).json({ message: "Email not found" });
     }
 
     const valid = await bcrypt.compare(password, user.rows[0].password);
 
     if (!valid) {
-      return res.status(400).json("Wrong password");
+      return res.status(400).json({ message: "Wrong password" });
     }
 
     const token = jwt.sign(
@@ -59,6 +59,6 @@ exports.login = async (req, res) => {
 
     res.json({ token });
   } catch (err) {
-    res.status(500).json(err.message);
+    res.status(500).json({ message: err.message });
   }
 };
